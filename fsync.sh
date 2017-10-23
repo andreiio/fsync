@@ -2,6 +2,7 @@
 
 # Author: Andrei Ioniță
 # Repository: https://github.com/andreiio/fsync
+# Version: 0.1.0
 
 LOCAL="$PWD"
 LATENCY=3
