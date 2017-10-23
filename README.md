@@ -6,5 +6,5 @@ Usage:
 
 Options:
   -i, --init        Perform full sync
-  -w, --watch       Reboot remote host
+  -w, --watch       Watch for file changes
 ```

@@ -59,7 +59,7 @@ case $1 in
 		echo ""
 		echo "Options:"
 		echo "  -i, --init        Perform full sync"
-		echo "  -w, --watch       Reboot remote host"
+		echo "  -w, --watch       Watch for file changes"
 		echo ""
 		exit 1
 		;;
