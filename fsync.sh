@@ -2,7 +2,7 @@
 
 # Author: Andrei Ioniță
 # Repository: https://github.com/andreiio/fsync
-# Version: 0.1.0
+# Version: 0.2.0
 
 BUFFER=`mktemp -t fsync` || exit 1
 LOCAL="$PWD"
