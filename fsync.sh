@@ -2,10 +2,27 @@
 
 # Author: Andrei Ioniță
 # Repository: https://github.com/andreiio/fsync
-# Version: 0.1.0
+# Version: 0.2.0
 
+BUFFER=`mktemp -t fsync` || exit 1
 LOCAL="$PWD"
-LATENCY=3
+DATE_FORMAT="%F %H:%M:%S"
+
+function finish() {
+	echo "\nPerforming cleanup..."
+	rm -f $BUFFER
+}
+
+trap finish EXIT
+
+colors=$(tput colors)
+if [ $colors -gt "8" ]; then
+	inf='\033[0;32m'
+	clr='\033[00m'
+else
+	inf=
+	clr=
+fi
 
 if [ ! -x "$(command -v fswatch)" ]; then
 	echo "ERROR: fswatch not found";
@@ -30,37 +47,35 @@ if [ -z $SYNC_PATH ]; then
 	exit 1
 fi
 
-cmd="rsync -arvz --delete"
+if [ -z $SYNC_POLL ]; then
+	SYNC_POLL=3
+fi
+
+cmd="rsync --delete -ha"
 
 if [ -f .rsyncignore ]; then
 	cmd+=" --exclude-from=.rsyncignore"
 fi
 
-case $1 in
-	-i|--init)
-		echo ""
-		$cmd $LOCAL/ $SYNC_HOST:$SYNC_PATH
-		;;
+echo "${inf}[`date +\"${DATE_FORMAT}\"`] Performing initial sync... ${clr}"
+$cmd $LOCAL/ $SYNC_HOST:$SYNC_PATH
+echo "Watching $PWD for changes every $SYNC_POLL seconds..."
 
-	-w|--watch)
-		fswatch -r0l $LATENCY $LOCAL/ | while read -d "" changed; do
-			TMPFILE=`mktemp -t fsync` || exit 1
-			echo $changed > $TMPFILE
-			echo $changed
-			echo "[`date '+%F %H:%M:%S'`] $changed changed. Sync..."
-			$cmd --include-from=$TMPFILE $LOCAL/ $SYNC_HOST:$SYNC_PATH
-			rm $TMPFILE
-		done
-		;;
+fswatch -r $LOCAL/ > $BUFFER &
 
-	*)
-		echo "Usage:"
-		echo "$0 [OPTION]"
-		echo ""
-		echo "Options:"
-		echo "  -i, --init        Perform full sync"
-		echo "  -w, --watch       Reboot remote host"
-		echo ""
-		exit 1
-		;;
-esac
+while true; do
+	count=$(cat $BUFFER | wc -l)
+
+	if [ $count -gt 0 ]; then
+		subj="file"
+
+		if [ $count -gt 1 ]; then
+			subj="${subj}s"
+		fi
+
+		echo "${inf}[`date +\"${DATE_FORMAT}\"`] $count $subj changed... ${clr}"
+		$cmd -v --include-from=$BUFFER $LOCAL/ $SYNC_HOST:$SYNC_PATH
+		>$BUFFER
+	fi
+	sleep $SYNC_POLL
+done;
