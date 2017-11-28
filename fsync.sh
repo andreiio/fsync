@@ -51,7 +51,7 @@ if [ -z $SYNC_POLL ]; then
 	SYNC_POLL=3
 fi
 
-cmd="rsync --delete -ha"
+cmd="rsync --delete -haL"
 
 if [ -f .rsyncignore ]; then
 	cmd+=" --exclude-from=.rsyncignore"
